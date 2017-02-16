@@ -6,7 +6,7 @@
 #define STROBE_PIN 4
 #define RESET_PIN 5
 #define NEOPIXEL_PIN 6
-#define NUM_NEOPIXELS 50
+#define NUM_NEOPIXELS 70
 #define NUM_FREQ 7
 int LEFT_DATA_PIN=14;
 int RIGHT_DATA_PIN=15;
@@ -39,7 +39,7 @@ void loop() {
     Serial.print(frequencies_right[i]);
     Serial.println();
   }*/
-  update_neopixels(50);
+  update_neopixels(NUM_NEOPIXELS);
 }
 
 
@@ -47,15 +47,26 @@ void update_neopixels(int wait){
   int rescaled_value = 0;
   for(int k=0; k<256; k++) {
     Read_Frequencies(frequencies_left, frequencies_right);
-    
-    for (int i = 0; i < NUM_FREQ-2; i++){
+    for (int i = 0; i < NUM_FREQ; i++){
       rescaled_value = map(frequencies_left[i]*1.25, 0, 1023, 0, 9);
-      for (int j = 0; j <= rescaled_value; j++){
-        strip.setPixelColor((i*10)+j, Wheel(k & 255));
+      //Due to the way this is wired every odd row is upside-down.
+      if (i%2 == 1){
+        for (int j = 9, n = (9 - rescaled_value); j > n; j--){
+          strip.setPixelColor((i*10)+j, Wheel(k & 255));
+        }
+        for (int j = (9 - rescaled_value); j >= 0; j--){
+          strip.setPixelColor((i*10)+j, strip.Color(0,0,0));
+        }
+      // Normal from bottom - to - top specifying.
+      } else {
+        for (int j = 0; j <= rescaled_value; j++){
+          strip.setPixelColor((i*10)+j, Wheel(k & 255));
+        }
+        for (int j = rescaled_value; j < 10; j++){
+          strip.setPixelColor((i*10)+j, strip.Color(0,0,0));
+        }  
       }
-      for (int j = rescaled_value; j < 10; j++){
-        strip.setPixelColor((i*10)+j, strip.Color(0,0,0));
-      }
+      
     }
     strip.show();
     delay(wait);
